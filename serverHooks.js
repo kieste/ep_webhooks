@@ -76,7 +76,8 @@ exports.handleMessage = function (hook_name, context, cb) {
         var messageType = _.get(context.message, 'data.type');
 
         if (messageType === 'USER_CHANGES') {
-            var user = _.get(context, 'client.conn.request.session.user');
+            var headers = _.get(context, 'client.conn.request.headers');
+            var userId = headers['x-forwarded-user'];
             var clientId = _.get(context, 'client.id');
             var rev = _.get(padMessageHandler, 'sessioninfos[' + clientId + '].rev');
             var padId = _.get(padMessageHandler, 'sessioninfos[' + clientId + '].padId');
@@ -85,14 +86,14 @@ exports.handleMessage = function (hook_name, context, cb) {
             if (padId) {
                 logger.debug('handleMessage', 'PAD CHANGED', padId);
                 if (changedPads[padId]) {
-                    var userIndex = _.findIndex(changedPads[padId], function (e) {return e.userId === user.id;});
+                    var userIndex = _.findIndex(changedPads[padId], function (e) {return e.userId === userId;});
                     if (userIndex  > -1 ) {
                         changedPads[padId].splice(userIndex, 1);
                     }
                 } else {
-                    changedPads[padId] = [];    
+                    changedPads[padId] = [];
                 }
-                changedPads[padId].push({userId: user.id, author: author, rev: rev}); // Use object, as then I don't need to worry about duplicates
+                changedPads[padId].push({userId: userId, author: author, rev: rev}); // Use object, as then I don't need to worry about duplicates
             } else {
                 logger.warn('handleMessage', 'Pad changed, but no padId!');
             }
